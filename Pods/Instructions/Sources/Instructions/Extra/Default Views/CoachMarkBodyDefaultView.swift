@@ -102,7 +102,7 @@ private extension CoachMarkBodyDefaultView {
 
         let views = (hintLabel: self.views.hintLabel, nextLabel: self.views.nextLabel,
                      separator: self.views.separator)
-
+        self.views.separator.isHidden = true
         self.addConstraints(helper.makeHorizontalConstraints(for: views))
     }
 
