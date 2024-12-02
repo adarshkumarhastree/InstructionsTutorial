@@ -1,21 +1,30 @@
 import UIKit
 import Instructions
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+
+    
 
     @IBOutlet weak var segmentedControl: UISegmentedControl!
     @IBOutlet weak var searchTextField: UITextField!
     @IBOutlet weak var textLabel: UILabel!
     @IBOutlet weak var controlButton: UIButton!
 
+    @IBOutlet weak var tbVwController: UITableView!
     let coachMarksController = CoachMarksController()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         self.coachMarksController.dataSource = self
         self.coachMarksController.delegate = self
+        tbVwController.register(UINib(nibName: "TableViewCell", bundle: nil), forCellReuseIdentifier: "TableViewCell")
+        tbVwController.delegate = self
+        tbVwController.dataSource = self
+        tbVwController.reloadData()
+        DispatchQueue.main.async {
+            self.showCoachMarkForCell(row: 2)
+        }
 
-  
 
     }
 
@@ -35,19 +44,57 @@ class ViewController: UIViewController {
 extension ViewController: CoachMarksControllerDataSource, CoachMarksControllerDelegate {
 
     func numberOfCoachMarks(for coachMarksController: CoachMarksController) -> Int {
-        return 4
+        return 6
     }
-
+   
     func coachMarksController(_ coachMarksController: CoachMarksController, coachMarkAt index: Int) -> CoachMark {
         switch index {
         case 0: return coachMarksController.helper.makeCoachMark(for: segmentedControl)
         case 1: return coachMarksController.helper.makeCoachMark(for: searchTextField)
         case 2: return coachMarksController.helper.makeCoachMark(for: textLabel)
         case 3: return coachMarksController.helper.makeCoachMark(for: controlButton)
+        case 4:
+            let indexPath = IndexPath(row: 2, section: 0)
+            
+            tbVwController.scrollToRow(at: indexPath, at: .middle, animated: false)
+
+            if let cell = tbVwController.cellForRow(at: indexPath) as? TableViewCell {
+                print("Successfully accessed button for row 2")
+                return coachMarksController.helper.makeCoachMark(for: cell.button)
+            } else {
+                print("Failed to access cell for row 2")
+                return coachMarksController.helper.makeCoachMark()
+            }
+        case 5 : var indexPath = IndexPath(row: 8, section: 0)
+             indexPath = IndexPath(row: 7, section: 0)
+               // Scroll to row 8 to ensure visibility
+               tbVwController.scrollToRow(at: indexPath, at: .middle, animated: true)
+            self.tbVwController.layoutIfNeeded()
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                if let cell = self.tbVwController.cellForRow(at: indexPath) as? TableViewCell {
+                    print("Successfully laid out and accessed button for row 8")
+                    self.coachMarksController.helper.makeCoachMark(for: cell.button)
+                   
+                  
+                } else {
+                    print("Cell for row 8 is still nil after scrolling")
+                }
+            }
+            return coachMarksController.helper.makeCoachMark()
+                    // Return a placeholder coach mark (won't be shown as `showNext` will trigger next)
         default: return coachMarksController.helper.makeCoachMark()
         }
+        
     }
+    func showCoachMarkForCell(row:Int) {
+        let indexPath = IndexPath(row: row, section: 0) // Adjust to your target row
+        tbVwController.scrollToRow(at: indexPath, at: .middle, animated: true)
 
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { // Delay to ensure scrolling is completed
+            self.coachMarksController.start(in: .viewController(self))
+        }
+    }
     func coachMarksController(_ coachMarksController: CoachMarksController, coachMarkViewsAt index: Int, madeFrom coachMark: CoachMark) -> (bodyView: CoachMarkBodyView, arrowView: CoachMarkArrowView?) {
         let coachViews = coachMarksController.helper.makeDefaultCoachViews(withArrow: true, arrowOrientation: coachMark.arrowOrientation)
 
@@ -133,6 +180,10 @@ extension ViewController: CoachMarksControllerDataSource, CoachMarksControllerDe
             coachViews.bodyView.hintLabel.text = "Your search text will appear here when you hit enter.,Hello! This is a segmented control you can toggle dark and light mode here!"
         case 3:
             coachViews.bodyView.hintLabel.text = "Finally, you can hit the control button to view your search details!,Hello! This is a segmented control you can toggle dark and light mode here!"
+        case 4:
+            coachViews.bodyView.hintLabel.text = "Case 4 Finally, you can hit the control button to view your search details!,Hello! This is a segmented control you can toggle dark and light mode here!"
+        case 5:
+            coachViews.bodyView.hintLabel.text = "Case 4 Finally, you can hit the control button to view your search details!,Hello! This is a segmented control you can toggle dark and light mode here!"
         default: break
         }
 
@@ -155,4 +206,20 @@ extension ViewController: CoachMarksControllerDataSource, CoachMarksControllerDe
     func coachMarksController(_ coachMarksController: CoachMarksController, didEndShowingBySkipping skipped: Bool) {
         AppManager.setUserSeenAppInstruction()
     }
+    
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 10
+    }
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell : TableViewCell = tableView.dequeueReusableCell(withIdentifier: "TableViewCell") as! TableViewCell
+        if let button = cell.button {
+                button.tag = indexPath.row
+            } else {
+                print("Button is nil in cell at row \(indexPath.row)")
+            }
+        return cell
+    }
+    
+    
 }
